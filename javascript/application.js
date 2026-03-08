@@ -547,13 +547,30 @@ function renderLevel(level, index = 0) {
   `;
   initSentenceReveal("sentence-reveal", c.pl);
 }
-
 function createRevealState(sentence) {
-  return {
-    chars: sentence.split("").map(ch => ({
+  const chars = sentence.split("").map((ch, i, arr) => {
+    const prev = arr[i - 1];
+
+    const isWordStart =
+      i === 0 ||
+      prev === " " ||
+      prev === "," ||
+      prev === "." ||
+      prev === "?";
+
+    return {
       original: ch,
-      revealed: false
-    })),
+      revealed:
+        isWordStart &&
+        ch !== " " &&
+        ch !== "," &&
+        ch !== "." &&
+        ch !== "?"
+    };
+  });
+
+  return {
+    chars,
     index: 0
   };
 }
@@ -567,24 +584,26 @@ function buildMaskedSentence(state) {
     return ch.revealed ? ch.original : "*";
   }).join("");
 }
-
 function revealOneLetter(state) {
-  // пропускаем сепараторы
+  // pomijamy separatory i już odkryte litery
   while (
     state.index < state.chars.length &&
-    isSeparator(state.chars[state.index].original)
+    (
+      isSeparator(state.chars[state.index].original) ||
+      state.chars[state.index].revealed
+    )
   ) {
     state.index++;
   }
 
   if (state.index >= state.chars.length) return;
 
-  // раскрываем букву
+  // odkrywamy literę
   state.chars[state.index].revealed = true;
 
   const { start, end } = getWordBounds(state, state.index);
 
-  // проверяем — всё ли слово раскрыто
+  // sprawdzamy czy całe słowo odkryte
   let fullyRevealed = true;
   for (let i = start; i < end; i++) {
     if (!state.chars[i].revealed) {
