@@ -143,12 +143,12 @@ function renderPath() {
   const maxId = Math.max(...HSK.map(c => c.id));
   const totalLevels = Math.ceil(maxId / WORDS_PER_LEVEL);
 
-  const visibleLevels = [];
-  for (let lvl = 1; lvl <= totalLevels; lvl++) {
-    if (!isLevelEmpty(lvl) && !isLevelCompleted(lvl)) {
-      visibleLevels.push(lvl);
-    }
-  }
+  // const visibleLevels = [];
+  // for (let lvl = 1; lvl <= totalLevels; lvl++) {
+  //   if (!isLevelEmpty(lvl) && !isLevelCompleted(lvl)) {
+  //     visibleLevels.push(lvl);
+  //   }
+  // }
 
   app.innerHTML = `
     <div class="fixed-bottom">
@@ -188,25 +188,25 @@ function renderPath() {
   let index = 0;
   let direction = "forward";
 
-  while (index < visibleLevels.length) {
-    const rowLevels = visibleLevels.slice(
-      index,
-      index + LEVELS_PER_ROW
-    );
+  // while (index < visibleLevels.length) {
+  //   const rowLevels = visibleLevels.slice(
+  //     index,
+  //     index + LEVELS_PER_ROW
+  //   );
 
-    createRowFromLevels(path, direction, rowLevels);
-    index += rowLevels.length;
+  //   createRowFromLevels(path, direction, rowLevels);
+  //   index += rowLevels.length;
 
-    if (index >= visibleLevels.length) break;
+  //   if (index >= visibleLevels.length) break;
 
-    if (TURN_LENGTH > 0) {
-      const turnLevels = visibleLevels.slice(index, index + TURN_LENGTH);
-      createTurnFromLevels(path, direction, turnLevels);
-      index += turnLevels.length;
-    }
+  //   if (TURN_LENGTH > 0) {
+  //     const turnLevels = visibleLevels.slice(index, index + TURN_LENGTH);
+  //     createTurnFromLevels(path, direction, turnLevels);
+  //     index += turnLevels.length;
+  //   }
 
-    direction = direction === "forward" ? "backward" : "forward";
-  }
+  //   direction = direction === "forward" ? "backward" : "forward";
+  // }
 }
 
 
@@ -822,10 +822,8 @@ function renderSrs() {
       <button class="speak-btn" onclick="speak('${c.pl}')">🔊</button>
     </div>
 
-    <h1>SRS</h1>
-
     <div class="char-card">
-      <div class="progress">${index + 1} / ${chars.length}</div>
+      <div class="progress" style="display: none">${index + 1} / ${chars.length}</div>
       <div class="russian_translation">${c.ru}</div>
       <div id="sentence-reveal"></div>
     </div>
