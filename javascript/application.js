@@ -233,8 +233,9 @@ function renderLevel(level, index = 0) {
   const isLast = index >= chars.length - 1;
 
   app.innerHTML = `
-    <div class="fixed-bottom">
-      <button class="back-btn" onclick="goBack(${level}, ${index})">←</button>
+    <div class="fixed-bottom high">
+      <button class="back-btn" onclick="goBack(${level}, ${index})">⌘</button>
+      ${ level > 1 ? `<button class="back-btn" onclick="renderLevel(${level - 1}, ${index})">←</button>` : ''}
 
       ${
         !isLast
@@ -460,8 +461,8 @@ function renderSrs() {
   const isLast = index >= chars.length - 1;
 
   app.innerHTML = `
-    <div class="fixed-bottom">
-      <button class="back-btn" onclick="location.hash = '#';">←</button>
+    <div class="fixed-bottom high">
+      <button class="back-btn" onclick="location.hash = '#';">⌘</button>
       <button class="ignore-btn" onclick="ignoreCurrentSrsChar()">
         -
       </button>
@@ -531,6 +532,7 @@ function renderVerbReveal(containerId, verb) {
         <button id="reveal-one">+</button>
         <button id="reveal-row">++</button>
         <button id="reveal-all">+++</button>
+        <button id="reveal-all-global">++++</button>
       </div>
 
       ${renderPresentMasked(state)}
@@ -552,6 +554,10 @@ function renderVerbReveal(containerId, verb) {
 
     document.getElementById("reveal-all").onclick = () => {
       revealAllVerb(state);
+      render();
+    };
+    document.getElementById("reveal-all-global").onclick = () => {
+      revealAllGlobal(state);
       render();
     };
   }
@@ -897,6 +903,7 @@ function renderImperativeMasked(state) {
     </table>
   `;
 }
+
 function rowMasked2(state, tense, person) {
   const m = getCell(state, tense, person, "m");
   const f = getCell(state, tense, person, "f");
@@ -921,6 +928,14 @@ function revealAllVerb(state) {
 
   state.cells.forEach(c => {
     if (c.tense === targetTense && c.value) {
+      c.revealedCount = c.value.length;
+    }
+  });
+}
+
+function revealAllGlobal(state) {
+  state.cells.forEach(c => {
+    if (c.value) {
       c.revealedCount = c.value.length;
     }
   });

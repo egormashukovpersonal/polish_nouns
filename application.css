@@ -108,9 +108,18 @@ button {
 .verb {
   font-size: 80px;
   font-family: monospace;
-  margin-top: 30px;
+  padding: 50px;
+  position: fixed;
+  background: #212121;
+  width: 100%;
+  z-index: 99999;
+  margin: -50px;
+  border-bottom: 1px solid white;
+  padding-bottom: 30px;
 }
-
+#sentence-reveal {
+padding-top: 120px;
+}
 .pl-translation {
   font-size: 80px;
   font-family: monospace;
@@ -156,6 +165,13 @@ button {
   z-index: 99;
   bottom: 300px;
   right: calc(48% + 20px);
+}
+#reveal-all-global {
+  position: fixed;
+  width: calc(24% - 20px);
+  z-index: 99;
+  bottom: 300px;
+  right: calc(72% + 20px);
 }
 #repeat-btn {
   position: fixed;
@@ -265,6 +281,11 @@ h1 {
   left: 0px;
   padding-bottom: 120px;
   padding-top: 20px;
+}
+
+.fixed-bottom.high {
+  padding-top: 220px;
+  border-top: 1px solid white;
 }
 
 
