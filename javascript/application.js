@@ -180,6 +180,9 @@ function renderPath() {
         const btn = document.createElement("button");
         btn.textContent = v.polish_word;
 
+        if (isLevelCompleted(v.id)) {
+          btn.classList.add("completed");
+        }
         btn.onclick = () => {
           location.hash = `/level/${v.id}`;
           window.location.reload();
