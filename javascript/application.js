@@ -1,7 +1,7 @@
 const LEVELS_PER_ROW = 3;
 const TURN_LENGTH = 0;
 const WORDS_PER_LEVEL = 1;
-const MASK_WITH = ' ';
+const MASK_WITH = '\u00A0';
 
 let HSK = [];
 let revealIndex = 0;
@@ -266,33 +266,55 @@ function createVerbRevealState(verb) {
   }
 
   // PRESENT
-  Object.entries(verb.present).forEach(([p, v]) => {
-    push("present", p, v);
+  const PRESENT_ORDER = [
+    "ja",
+    "ty",
+    "on",
+    "ona",
+    "ono",
+    "oni",
+    "one",
+    "my",
+    "wy"
+  ];
+
+  PRESENT_ORDER.forEach(p => {
+    push("present", p, verb.present[p]);
   });
 
+  const ORDER = [
+    "ja",
+    "ty",
+    "on",
+    "ona",
+    "oni",
+    "one",
+    "my",
+    "wy"
+  ];
   // PAST (m/f + ono отдельно)
-  ["ja","ty","on","ona","my","wy","oni","one"].forEach(p => {
+  ORDER.forEach(p => {
     push("past", p, verb.past.masculine[p], { gender: "m" });
     push("past", p, verb.past.feminine[p], { gender: "f" });
   });
 
-  push("past", "ono", verb.past.neuter.ono, { gender: "n" });
+  // push("past", "ono", verb.past.neuter.ono, { gender: "n" });
 
   // FUTURE
-  ["ja","ty","on","ona","my","wy","oni","one"].forEach(p => {
+  ORDER.forEach(p => {
     push("future", p, verb.future.masculine[p], { gender: "m" });
     push("future", p, verb.future.feminine[p], { gender: "f" });
   });
 
-  push("future", "ono", verb.future.neuter.ono, { gender: "n" });
+  // push("future", "ono", verb.future.neuter.ono, { gender: "n" });
 
   // CONDITIONAL
-  ["ja","ty","on","ona","my","wy","oni","one"].forEach(p => {
+  ORDER.forEach(p => {
     push("conditional", p, verb.conditional.masculine[p], { gender: "m" });
     push("conditional", p, verb.conditional.feminine[p], { gender: "f" });
   });
 
-  push("conditional", "ono", verb.conditional.neuter.ono, { gender: "n" });
+  // push("conditional", "ono", verb.conditional.neuter.ono, { gender: "n" });
 
   // IMPERATIVE
   Object.entries(verb.imperative).forEach(([p, v]) => {
@@ -622,16 +644,6 @@ function renderPast(title, data) {
   `;
 }
 
-function renderImperative(data) {
-  return `
-    <h2 class="header-h2">Imperative</h2>
-    <table class="verb-table">
-      ${row("ty", data.ty)}
-      ${row("my", data.my)}
-      ${row("wy", data.wy)}
-    </table>
-  `;
-}
 function row(label, value) {
   return `
     <tr>
