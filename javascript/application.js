@@ -3,78 +3,100 @@ const TURN_LENGTH = 0;
 const WORDS_PER_LEVEL = 1;
 const MASK_WITH = '\u00A0';
 
-const GROUPS = [
-  { name: "-ić / -yć", key: "ic" },
-  { name: "-ać", key: "ac" },
-  { name: "-eć", key: "ec" },
-  { name: "-ować", key: "owac" },
-  { name: "irregular", key: "irr" }
-];
-const GROUP_LABELS = {
-  owac: "-ować",
-  ic: "-ić / -yć",
-  ac: "-ać",
-  ec: "-eć",
-  irr: "irregular"
+const CASE_ANCHORS = {
+  mianownik: "to jest",
+  dopelniacz: "nie ma",
+  celownik: "daję",
+  biernik: "widzę",
+  narzednik: "jestem z",
+  miejscownik: "mówię o",
+  wolacz: "hej!"
 };
-const GROUP_ORDER = ["owac", "ic", "ac", "ec", "irr"];
 
-function groupVerbs(verbs) {
+const GROUPS = [
+  { name: "M basic", key: "m_basic" },
+  { name: "M anim", key: "m_animate" },
+  { name: "M hard", key: "m_hard" },
+
+  { name: "F -a", key: "f_basic" },
+  { name: "F cons", key: "f_cons" },
+  { name: "F hard", key: "f_hard" },
+
+  { name: "N -o", key: "n_basic" },
+  { name: "N hard", key: "n_hard" },
+
+  { name: "Plural", key: "plural_only" },
+  { name: "Mass", key: "singular_only" }
+];
+
+const GROUP_LABELS = Object.fromEntries(
+  GROUPS.map(g => [g.key, g.name])
+);
+
+const GROUP_ORDER = GROUPS.map(g => g.key);
+function groupNouns(nouns) {
   const groups = {};
 
-  verbs.forEach(v => {
-    const g = getVerbGroup(v);
+  nouns.forEach(n => {
+    const g = getNounGroup(n);
 
     if (!groups[g]) {
       groups[g] = [];
     }
 
-    groups[g].push(v);
+    groups[g].push(n);
   });
 
   return groups;
 }
-function normalizeVerb(v) {
-  return v.replace(/\s*się$/, "");
-}
-function getVerbGroup(verb) {
-  let v = normalizeVerb(verb.polish_word);
+function getNounGroup(n) {
+  const word = n.polish_word;
 
-  // --- ЖЁСТКИЕ irregular ---
+  // ===== PLURAL ONLY =====
   if ([
-    "być",
-    "iść",
-    "jeść",
-    "dać",
-    "brać",
-    "stać",
-    "mieć",
-    "wiedzieć",
-    "chcieć"
-  ].includes(v)) {
-    return "irr";
+    "drzwi","okulary","spodnie","nożyczki","skrzypce",
+    "wakacje","ferie","urodziny","imieniny","zawody",
+    "narty","szachy","usta","plecy","ludzie"
+  ].includes(word)) {
+    return "plural_only";
   }
 
-  // --- perfective (очень важно) ---
+  // ===== MASS =====
   if ([
-    "znaleźć",
-    "wydarzyć"
-  ].includes(v)) {
-    return "irr";
+    "mleko","masło","mięso","złoto","srebro","piasek",
+    "śnieg","deszcz","wiatr","dym","muzyka","cisza"
+  ].includes(word)) {
+    return "singular_only";
   }
 
-  // --- специальные фиксы ---
-  if (["czuć", "psuć"].includes(v)) {
-    return "ic";
+  // ===== GENDER =====
+  if (n.gender === "m") {
+    if (n.animate) return "m_animate";
+
+    if (n.flags?.is_difficult || n.flags?.has_alternation) {
+      return "m_hard";
+    }
+
+    return "m_basic";
   }
 
-  // --- обычные группы ---
-  if (v.endsWith("ować")) return "owac";
-  if (v.endsWith("ać")) return "ac";
-  if (v.endsWith("eć")) return "ec";
-  if (v.endsWith("ić") || v.endsWith("yć")) return "ic";
+  if (n.gender === "f") {
+    if (word.endsWith("a")) {
+      if (n.flags?.is_difficult) return "f_hard";
+      return "f_basic";
+    }
 
-  return "irr";
+    if (n.flags?.is_difficult) return "f_hard";
+
+    return "f_cons";
+  }
+
+  if (n.gender === "n") {
+    if (word.endsWith("o")) return "n_basic";
+    return "n_hard";
+  }
+
+  return "m_hard";
 }
 
 let HSK = [];
@@ -138,7 +160,7 @@ function isLevelCompleted(level) {
   return !!progress.completedLevels?.[level];
 }
 function renderPath() {
-  const groups = groupVerbs(HSK);
+  const groups = groupNouns(HSK);
 
   app.innerHTML = `
     <div class="fixed-bottom">
@@ -341,11 +363,11 @@ function renderLevel(level, index = 0) {
     </div>
 
     <div class="char-card">
-      <div class="verb">${c.polish_word} (${c.russian})</div>
+      <div class="verb">${c.polish_word} (${c.russian_word})</div>
       <div id="sentence-reveal"></div>
     </div>
   `;
-  renderVerbReveal("sentence-reveal", c)
+  renderNounReveal("sentence-reveal", c)
 }
 
 function finishLevel(level) {
@@ -354,126 +376,6 @@ function finishLevel(level) {
   window.location.reload();
 }
 
-function createVerbRevealState(verb) {
-  const cells = [];
-
-  function push(tense, person, value, meta = {}) {
-    cells.push({
-      tense,
-      person,
-      value,
-      revealedCount: 0,
-      ...meta
-    });
-  }
-
-  // PRESENT
-  const PRESENT_ORDER = [
-    "ja",
-    "ty",
-    "on",
-    "ona",
-    "ono",
-    "oni",
-    "one",
-    "my",
-    "wy"
-  ];
-
-  PRESENT_ORDER.forEach(p => {
-    push("present", p, verb.present[p]);
-  });
-
-  const ORDER = [
-    "ja",
-    "ty",
-    "on",
-    "ona",
-    "oni",
-    "one",
-    "my",
-    "wy"
-  ];
-  // PAST (m/f + ono отдельно)
-  ORDER.forEach(p => {
-    push("past", p, verb.past.masculine[p], { gender: "m" });
-    push("past", p, verb.past.feminine[p], { gender: "f" });
-  });
-
-  // push("past", "ono", verb.past.neuter.ono, { gender: "n" });
-
-  // FUTURE
-  ORDER.forEach(p => {
-    push("future", p, verb.future.masculine[p], { gender: "m" });
-    push("future", p, verb.future.feminine[p], { gender: "f" });
-  });
-
-  // push("future", "ono", verb.future.neuter.ono, { gender: "n" });
-
-  // CONDITIONAL
-  ORDER.forEach(p => {
-    push("conditional", p, verb.conditional.masculine[p], { gender: "m" });
-    push("conditional", p, verb.conditional.feminine[p], { gender: "f" });
-  });
-
-  // push("conditional", "ono", verb.conditional.neuter.ono, { gender: "n" });
-
-  // IMPERATIVE
-  Object.entries(verb.imperative).forEach(([p, v]) => {
-    push("imperative", p, v);
-  });
-
-  return {
-    cells,
-    index: 0
-  };
-}
-function renderPresentMasked(state) {
-  const t = "present";
-
-  return `
-    <h2 class="header-h2">Present</h2>
-    <table class="verb-table">
-      ${rowPresent(state, "ja")}
-      ${rowPresent(state, "ty")}
-
-      ${rowPresentCombined(state, ["on","ona","ono"], "on/ona/ono")}
-      ${rowPresentCombined(state, ["oni","one"], "oni/one")}
-
-      ${rowPresent(state, "my")}
-      ${rowPresent(state, "wy")}
-
-    </table>
-  `;
-}
-function getPresentGroupCells(state, persons) {
-  return persons
-    .map(p => getCell(state, "present", p))
-    .filter(Boolean);
-}
-function rowPresent(state, person) {
-  const c = getCell(state, "present", person);
-
-  return `
-    <tr>
-      <td>${person}</td>
-      <td>${mask(c?.value, c?.revealedCount)}</td>
-    </tr>
-  `;
-}
-function rowPresentCombined(state, persons, label) {
-  const cells = persons.map(p => getCell(state, "present", p));
-
-  // берём первую (они одинаковые по значению)
-  const c = cells[0];
-
-  return `
-    <tr>
-      <td>${label}</td>
-      <td>${mask(c?.value, c?.revealedCount)}</td>
-    </tr>
-  `;
-}
 function mask(val, revealedCount) {
   if (!val) return "-";
 
@@ -484,44 +386,6 @@ function mask(val, revealedCount) {
       return i < revealedCount ? ch : MASK_WITH;
     })
     .join("");
-}
-
-function createRevealState(sentence) {
-  const chars = sentence.split("").map((ch, i, arr) => {
-    const prev = arr[i - 1];
-
-    const isWordStart =
-      i === 0 ||
-      prev === " " ||
-      prev === "," ||
-      prev === "." ||
-      prev === "?";
-
-    return {
-      original: ch,
-      revealed:
-        isWordStart &&
-        ch !== " " &&
-        ch !== "," &&
-        ch !== "." &&
-        ch !== "?"
-    };
-  });
-
-  return {
-    chars,
-    index: 0
-  };
-}
-
-function buildMaskedSentence(state) {
-  return state.chars.map(ch => {
-    if (ch.original === " " || ch.original === "," || ch.original === "." || ch.original === "?") {
-      return ch.original;
-    }
-
-    return ch.revealed ? ch.original : MASK_WITH;
-  }).join("");
 }
 
 function isSeparator(ch) {
@@ -569,7 +433,99 @@ function ignoreCurrentSrsChar() {
     renderSrs();
   }
 }
+function getNounCell(state, number, kase) {
+  return state.cells.find(c =>
+    c.number === number && c.kase === kase
+  );
+}
+function mask(val, revealedCount) {
+  if (!val) return "-";
 
+  return val
+    .split("")
+    .map((ch, i) => {
+      if (ch === " ") return " ";
+      return i < revealedCount ? ch : MASK_WITH;
+    })
+    .join("");
+}
+function renderCaseTableMasked(state, number) {
+  return `
+    <table class="noun-table">
+      ${rowCaseMasked(state, number, "mianownik", "mianownik")}
+      ${rowCaseMasked(state, number, "dopelniacz", "dopelniacz")}
+      ${rowCaseMasked(state, number, "celownik", "celownik")}
+      ${rowCaseMasked(state, number, "biernik", "biernik")}
+      ${rowCaseMasked(state, number, "narzednik", "narzednik")}
+      ${rowCaseMasked(state, number, "miejscownik", "miejscownik")}
+      ${rowCaseMasked(state, number, "wolacz", "wolacz")}
+    </table>
+  `;
+}
+function revealOneNoun(state) {
+  const cell = state.cells.find(c =>
+    c.value && c.revealedCount < c.value.length
+  );
+
+  if (!cell) return;
+
+  cell.revealedCount++;
+}
+
+function revealRowNoun(state) {
+  const cell = state.cells.find(c =>
+    c.value && c.revealedCount < c.value.length
+  );
+
+  if (!cell) return;
+
+  cell.revealedCount = cell.value.length;
+}
+
+function revealAllNoun(state) {
+  state.cells.forEach(c => {
+    if (c.value) {
+      c.revealedCount = c.value.length;
+    }
+  });
+}
+function rowCaseMasked(state, number, key, label) {
+  const cell = getNounCell(state, number, key);
+
+  return `
+    <tr>
+      <td class="case-name">${label}</td>
+      <td class="case-anchor">${CASE_ANCHORS[key]}</td>
+      <td class="case-value">
+        ${mask(cell?.value, cell?.revealedCount)}
+      </td>
+    </tr>
+  `;
+}
+function createNounRevealState(noun) {
+  const cells = [];
+
+  function push(number, kase, value) {
+    cells.push({
+      number, // singular / plural
+      kase,
+      value,
+      revealedCount: 0
+    });
+  }
+
+  Object.entries(noun.singular).forEach(([k, v]) => {
+    push("singular", k, v);
+  });
+
+  Object.entries(noun.plural).forEach(([k, v]) => {
+    push("plural", k, v);
+  });
+
+  return {
+    cells
+  };
+}
 function renderSrs() {
   const session = JSON.parse(localStorage.getItem("srsSession"));
   if (!session) {
@@ -598,11 +554,11 @@ function renderSrs() {
 
     <div class="char-card">
       <div class="progress" style="display: none">${index + 1} / ${chars.length}</div>
-      <div class="verb">${c.polish_word} (${c.russian})</div>
+      <div class="verb">${c.polish_word} (${c.russian_word})</div>
       <div id="sentence-reveal"></div>
     </div>
   `;
-  renderVerbReveal("sentence-reveal", c)
+  renderNounReveal("sentence-reveal", c)
 }
 
 function nextSrs() {
@@ -644,12 +600,11 @@ function isIgnoredFromSrs(id) {
   const progress = getProgress();
   return !!progress.ignoredFromSrs?.[id];
 }
-
-function renderVerbReveal(containerId, verb) {
+function renderNounReveal(containerId, noun) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  const state = createVerbRevealState(verb);
+  const state = createNounRevealState(noun);
 
   function render() {
     container.innerHTML = `
@@ -657,37 +612,54 @@ function renderVerbReveal(containerId, verb) {
         <button id="reveal-one">+</button>
         <button id="reveal-row">++</button>
         <button id="reveal-all">+++</button>
-        <button id="reveal-all-global">++++</button>
       </div>
 
-      ${renderPresentMasked(state)}
-      ${renderPastCompactMasked(state)}
-      ${renderFutureCompactMasked(state)}
-      ${renderConditionalCompactMasked(state)}
-      ${renderImperativeMasked(state)}
+      <h1>Singular</h1>
+      ${renderCaseTableMasked(state, "singular")}
+
+      <h1>Plural</h1>
+      ${renderCaseTableMasked(state, "plural")}
     `;
 
     document.getElementById("reveal-one").onclick = () => {
-      revealOne(state);
+      revealOneNoun(state);
       render();
     };
 
     document.getElementById("reveal-row").onclick = () => {
-      revealWord(state);
+      revealRowNoun(state);
       render();
     };
 
     document.getElementById("reveal-all").onclick = () => {
-      revealAllVerb(state);
-      render();
-    };
-    document.getElementById("reveal-all-global").onclick = () => {
-      revealAllGlobal(state);
+      revealAllNoun(state);
       render();
     };
   }
 
   render();
+}
+function renderCaseTable(forms) {
+  return `
+    <table class="noun-table">
+      ${rowCase("Mianownik", "mianownik", forms.mianownik)}
+      ${rowCase("Dopełniacz", "dopelniacz", forms.dopelniacz)}
+      ${rowCase("Celownik", "celownik", forms.celownik)}
+      ${rowCase("Biernik", "biernik", forms.biernik)}
+      ${rowCase("Narzędnik", "narzednik", forms.narzednik)}
+      ${rowCase("Miejscownik", "miejscownik", forms.miejscownik)}
+      ${rowCase("Wołacz", "wolacz", forms.wolacz)}
+    </table>
+  `;
+}
+function rowCase(label, key, value) {
+  return `
+    <tr>
+      <td class="case-name">${label}</td>
+      <td class="case-anchor">${CASE_ANCHORS[key]}</td>
+      <td class="case-value">${value || "-"}</td>
+    </tr>
+  `;
 }
 function rowMaskedCombined(state, tense, persons, label) {
   const m = getCell(state, tense, persons[0], "m");
@@ -708,28 +680,6 @@ function revealWord(state) {
 
   if (!cell) return;
 
-  // группы present
-  if (cell.tense === "present" && ["on","ona","ono"].includes(cell.person)) {
-    const group = getPresentGroupCells(state, ["on","ona","ono"]);
-
-    group.forEach(c => {
-      c.revealedCount = c.value.length;
-    });
-
-    return;
-  }
-
-  if (cell.tense === "present" && ["oni","one"].includes(cell.person)) {
-    const group = getPresentGroupCells(state, ["oni","one"]);
-
-    group.forEach(c => {
-      c.revealedCount = c.value.length;
-    });
-
-    return;
-  }
-
-  // обычное
   cell.revealedCount = cell.value.length;
 }
 
@@ -781,31 +731,6 @@ function revealOne(state) {
 
   if (!cell) return;
 
-  // если это present и входит в группу
-  if (cell.tense === "present" && ["on","ona","ono"].includes(cell.person)) {
-    const group = getPresentGroupCells(state, ["on","ona","ono"]);
-
-    group.forEach(c => {
-      if (c.revealedCount < c.value.length) {
-        c.revealedCount++;
-      }
-    });
-
-    return;
-  }
-
-  if (cell.tense === "present" && ["oni","one"].includes(cell.person)) {
-    const group = getPresentGroupCells(state, ["oni","one"]);
-
-    group.forEach(c => {
-      if (c.revealedCount < c.value.length) {
-        c.revealedCount++;
-      }
-    });
-
-    return;
-  }
-
   // обычное поведение
   cell.revealedCount++;
 }
@@ -816,130 +741,8 @@ function getCell(state, tense, person, gender) {
     (gender ? c.gender === gender : true)
   );
 }
-function renderPastCompactMasked(state) {
-  const t = "past";
 
-  return `
-    <h2 class="header-h2">Past</h2>
-    <table class="verb-table">
-      <tr>
-        <td></td>
-        <td>m</td>
-        <td>f</td>
-      </tr>
 
-      ${rowMasked2(state, t, "ja")}
-      ${rowMasked2(state, t, "ty")}
-
-      ${rowMaskedCombined(state, t, ["on","ona"], "on/ona")}
-      ${rowMaskedCombined(state, t, ["oni","one"], "oni/one")}
-
-      ${rowMasked2(state, t, "my")}
-      ${rowMasked2(state, t, "wy")}
-
-    </table>
-
-    <div class="ono-block"  style="display:none">
-      ono: ${mask(
-        getCell(state, t, "ono", "n")?.value,
-        getCell(state, t, "ono", "n")?.revealedCount
-      )}
-    </div>
-  `;
-}
-function renderFutureCompactMasked(state) {
-  const t = "future";
-
-  return `
-    <h2 class="header-h2">Future</h2>
-    <table class="verb-table">
-      <tr>
-        <td></td>
-        <td>m</td>
-        <td>f</td>
-      </tr>
-
-      ${rowMasked2(state, t, "ja")}
-      ${rowMasked2(state, t, "ty")}
-
-      ${rowMaskedCombined(state, t, ["on","ona"], "on/ona")}
-      ${rowMaskedCombined(state, t, ["oni","one"], "oni/one")}
-
-      ${rowMasked2(state, t, "my")}
-      ${rowMasked2(state, t, "wy")}
-
-    </table>
-
-    <div class="ono-block" style="display:none">
-      ono: ${mask(
-        getCell(state, t, "ono", "n")?.value,
-        getCell(state, t, "ono", "n")?.revealedCount
-      )}
-    </div>
-  `;
-}
-function renderConditionalCompactMasked(state) {
-  const t = "conditional";
-
-  return `
-    <h2 class="header-h2">Conditional</h2>
-    <table class="verb-table">
-      <tr>
-        <td></td>
-        <td>m</td>
-        <td>f</td>
-      </tr>
-
-      ${rowMasked2(state, t, "ja")}
-      ${rowMasked2(state, t, "ty")}
-
-      ${rowMaskedCombined(state, t, ["on","ona"], "on/ona")}
-      ${rowMaskedCombined(state, t, ["oni","one"], "oni/one")}
-
-      ${rowMasked2(state, t, "my")}
-      ${rowMasked2(state, t, "wy")}
-
-    </table>
-
-    <div class="ono-block" style="display:none">
-      ono: ${mask(
-        getCell(state, t, "ono", "n")?.value,
-        getCell(state, t, "ono", "n")?.revealedCount
-      )}
-    </div>
-  `;
-}
-function renderImperativeMasked(state) {
-  const t = "imperative";
-
-  return `
-    <h2 class="header-h2">Imperative</h2>
-    <table class="verb-table">
-      ${["ty","my","wy"].map(p => {
-        const c = getCell(state, t, p);
-        return `
-          <tr>
-            <td>${p}</td>
-            <td>${mask(c?.value, c?.revealedCount)}</td>
-          </tr>
-        `;
-      }).join("")}
-    </table>
-  `;
-}
-
-function rowMasked2(state, tense, person) {
-  const m = getCell(state, tense, person, "m");
-  const f = getCell(state, tense, person, "f");
-
-  return `
-    <tr>
-      <td>${person}</td>
-      <td>${mask(m?.value, m?.revealedCount)}</td>
-      <td>${mask(f?.value, f?.revealedCount)}</td>
-    </tr>
-  `;
-}
 function revealAllVerb(state) {
   // найти первую незакрытую ячейку
   const target = state.cells.find(c =>

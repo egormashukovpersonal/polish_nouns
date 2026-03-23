@@ -7,230 +7,457 @@ require "set"
 API_URL = "https://api.openai.com/v1/chat/completions"
 MODEL = "gpt-4.1"
 
-verbs = [
-  "być",
-  "mieć",
-  "robić",
-  "mówić",
-  "iść",
-  "widzieć",
-  "dać",
-  "chcieć",
-  "wiedzieć",
-  "musieć",
+nouns = [
+  # ===== MASCULINE — BASIC / COMMON =====
+  "kot",
+  "pies",
+  "dom",
+  "stół",
+  "las",
+  "sad",
+  "sklep",
+  "telefon",
+  "samochód",
+  "rower",
+  "zegar",
+  "klucz",
+  "chleb",
+  "ser",
+  "cukier",
+  "ryż",
+  "obiad",
+  "ogród",
+  "pokój",
+  "brat",
+  "syn",
+  "ojciec",
+  "mąż",
+  "sąsiad",
+  "student",
+  "uczeń",
+  "nauczyciel",
+  "lekarz",
+  "klient",
+  "turysta",
 
-  "brać",
-  "stać",
-  "myśleć",
-  "patrzeć",
-  "słuchać",
-  "pracować",
-  "jeść",
-  "pić",
-  "mieszkać",
-  "żyć",
+  # ===== MASCULINE — ANIMATE / PERSON / ANIMAL =====
+  "człowiek",
+  "chłopiec",
+  "mężczyzna",
+  "kolega",
+  "przyjaciel",
+  "gość",
+  "pilot",
+  "aktor",
+  "policjant",
+  "pracownik",
+  "robotnik",
+  "rolnik",
+  "żołnierz",
+  "piesek",
+  "kotek",
+  "koń",
+  "lew",
+  "tygrys",
+  "wilk",
+  "ptak",
 
-  "kochać",
-  "lubić",
-  "czuć",
-  "wierzyć",
-  "szukać",
-  "znaleźć",
-  "otwierać",
-  "zamykać",
-  "sięgać",
-  "trzymać",
+  # ===== MASCULINE — HARDER / ALTERNATIONS / IRREGULARITIES =====
+  "ogień",
+  "kamień",
+  "dzień",
+  "liść",
+  "gwóźdź",
+  "nóż",
+  "mróz",
+  "książę",
+  "król",
+  "przyjaciel",
+  "bohater",
+  "zwycięzca",
+  "mieszkaniec",
+  "obcokrajowiec",
+  "sprzedawca",
+  "kierowca",
+  "artysta",
+  "poeta",
+  "dentysta",
+  "koleżka",
 
-  "prowadzić",
-  "jechać",
-  "wracać",
-  "wychodzić",
-  "wchodzić",
-  "przychodzić",
-  "zostawać",
-  "spotykać",
-  "poznawać",
-  "uczyć",
+  # ===== FEMININE — BASIC -A =====
+  "kobieta",
+  "mama",
+  "siostra",
+  "babcia",
+  "ciocia",
+  "dziewczyna",
+  "szkoła",
+  "ulica",
+  "książka",
+  "gazeta",
+  "herbata",
+  "kawa",
+  "woda",
+  "zupa",
+  "ryba",
+  "sałata",
+  "praca",
+  "nauka",
+  "zabawa",
+  "rozmowa",
+  "podróż",
+  "minuta",
+  "godzina",
+  "sekunda",
+  "mapa",
+  "torba",
+  "walizka",
+  "sukienka",
+  "koszula",
+  "łyżka",
 
-  "uczyć się",
-  "czytać",
-  "pisać",
-  "liczyć",
-  "rozumieć",
-  "zapominać",
-  "pamiętać",
-  "pytać",
-  "odpowiadać",
-  "prosić",
+  # ===== FEMININE — CONSONANT / SOFTER / HARDER =====
+  "noc",
+  "moc",
+  "pomoc",
+  "miłość",
+  "radość",
+  "kość",
+  "wieś",
+  "myśl",
+  "sól",
+  "krew",
+  "brew",
+  "twarz",
+  "część",
+  "młodość",
+  "przyszłość",
+  "wiadomość",
+  "przeszłość",
+  "odpowiedź",
+  "powieść",
+  "jesień",
 
-  "dawać",
-  "odbierać",
-  "kupować",
-  "sprzedawać",
-  "płacić",
-  "zarabiać",
-  "oszczędzać",
-  "wydawać",
-  "brać udział",
-  "decydować",
+  # ===== FEMININE — HARDER / STEM CHANGES / SPECIAL =====
+  "ręka",
+  "noga",
+  "głowa",
+  "ziemia",
+  "imię? nie", # tylko jako separator myślowy, usuń jeśli nie chcesz komentarza w danych
+  "matka",
+  "córka",
+  "żona",
+  "pani",
+  "koleżanka",
+  "lekcja",
+  "stacja",
+  "informacja",
+  "decyzja",
+  "historia",
+  "kuchnia",
+  "łazienka",
+  "sypialnia",
+  "dziedzina",
+  "rodzina",
 
-  "planować",
-  "zmieniać",
-  "zaczynać",
-  "kończyć",
-  "próbować",
-  "udawać",
-  "wydarzyć się",
-  "dziać się",
-  "tworzyć",
-  "niszczyć",
+  # ===== NEUTER — BASIC -O =====
+  "okno",
+  "drzewo",
+  "auto",
+  "jezioro",
+  "miasto",
+  "piwo",
+  "jajko",
+  "lustro",
+  "krzesło",
+  "biuro",
+  "zdjęcie",
+  "radio",
+  "słońce",
+  "miejsce",
+  "pole",
+  "morze",
+  "serce",
+  "zwierzę",
+  "dziecko",
+  "ramię",
 
-  "budować",
-  "naprawiać",
-  "psuć",
-  "otaczać",
-  "chronić",
-  "atakować",
-  "bronić",
-  "walczyć",
-  "wygrywać",
-  "przegrywać",
+  # ===== NEUTER — HARDER -E / -Ę / IRREGULAR =====
+  "imię",
+  "plemię",
+  "księstwo",
+  "życie",
+  "pytanie",
+  "jedzenie",
+  "mieszkanie",
+  "czytanie",
+  "pisanie",
+  "latanie",
+  "marzenie",
+  "ćwiczenie",
+  "wydarzenie",
+  "pokolenie",
+  "zachowanie",
+  "narzędzie",
+  "przedmieście",
+  "wejście",
+  "wyjście",
+  "szczęście",
 
-  "biec",
-  "chodzić",
-  "lecieć",
-  "latać",
-  "pływać",
-  "siedzieć",
-  "stać",
-  "leżeć",
-  "spać",
-  "budzić się",
+  # ===== PLURAL-ONLY / USEFUL EDGE CASES =====
+  "drzwi",
+  "okulary",
+  "spodnie",
+  "nożyczki",
+  "skrzypce",
+  "wakacje",
+  "ferie",
+  "urodziny",
+  "imieniny",
+  "zawody",
+  "narty",
+  "szachy",
+  "usta",
+  "plecy",
+  "ludzie",
+  "państwo",
+  "dzieje",
+  "okolice",
+  "peryferia",
+  "finanse",
 
-  "myć",
-  "ubierać",
-  "rozbierać",
-  "gotować",
-  "sprzątać",
-  "czyścić",
-  "otwierać się",
-  "zamykać się",
-  "śmiać się",
-  "bać się"
+  # ===== SINGULAR-ONLY / MASS / ABSTRACT =====
+  "mleko",
+  "masło",
+  "mięso",
+  "żelazo",
+  "złoto",
+  "srebro",
+  "miedź",
+  "piasek",
+  "śnieg",
+  "deszcz",
+  "wiatr",
+  "dym",
+  "ogień",
+  "muzyka",
+  "cisza",
+  "hałas",
+  "spokój",
+  "zdrowie",
+  "bieda",
+  "wolność",
+
+  # ===== FREQUENT ABSTRACTS =====
+  "czas",
+  "rok",
+  "problem",
+  "pomysł",
+  "plan",
+  "cel",
+  "sposób",
+  "powód",
+  "wynik",
+  "błąd",
+  "prawo",
+  "język",
+  "prawda",
+  "sprawa",
+  "idea",
+  "możliwość",
+  "umiejętność",
+  "potrzeba",
+  "nadzieja",
+  "decyzja",
+
+  # ===== BODY PARTS =====
+  "ręka",
+  "noga",
+  "głowa",
+  "oko",
+  "ucho",
+  "nos",
+  "usta",
+  "zęb",
+  "serce",
+  "palec",
+  "kolano",
+  "ramię",
+  "twarz",
+  "włosy",
+  "plecy",
+
+  # ===== FOOD / EVERYDAY =====
+  "jabłko",
+  "banan",
+  "pomidor",
+  "ziemniak",
+  "ogórek",
+  "chleb",
+  "masło",
+  "mleko",
+  "ser",
+  "woda",
+  "sok",
+  "kawa",
+  "herbata",
+  "cukierek",
+  "ciastko",
+  "zupa",
+  "ryż",
+  "makaron",
+  "mięso",
+  "jajko",
+
+  # ===== PLACES =====
+  "dom",
+  "mieszkanie",
+  "pokój",
+  "kuchnia",
+  "łazienka",
+  "biuro",
+  "szkoła",
+  "uczelnia",
+  "sklep",
+  "restauracja",
+  "kawiarnia",
+  "lotnisko",
+  "dworzec",
+  "przystanek",
+  "ulica",
+  "miasto",
+  "wieś",
+  "kraj",
+  "plaża",
+  "las",
+
+  # ===== PROFESSION / SOCIAL =====
+  "student",
+  "uczeń",
+  "nauczyciel",
+  "lekarz",
+  "pielęgniarka",
+  "programista",
+  "kierowca",
+  "sprzedawca",
+  "kelner",
+  "kelnerka",
+  "pracownik",
+  "szef",
+  "dyrektor",
+  "inżynier",
+  "artysta",
+  "aktor",
+  "policjant",
+  "urzędnik",
+  "sąsiad",
+  "przyjaciel",
+
+  # ===== TIME WORDS =====
+  "dzień",
+  "tydzień",
+  "miesiąc",
+  "rok",
+  "godzina",
+  "minuta",
+  "sekunda",
+  "chwila",
+  "pora",
+  "czas",
+  "noc",
+  "wieczór",
+  "rano",
+  "zima",
+  "wiosna",
+  "lato",
+  "jesień",
+
+  # ===== GOOD TRICKY WORDS FOR TESTING =====
+  "człowiek",
+  "dziecko",
+  "imię",
+  "zwierzę",
+  "ramię",
+  "książę",
+  "gość",
+  "liść",
+  "kość",
+  "wieś",
+  "mysz",
+  "sędzia",
+  "hrabia",
+  "poeta",
+  "mężczyzna",
+  "kobieta",
+  "noc",
+  "morze",
+  "serce",
+  "słońce"
 ]
 
 DEST_DATA_FILE   = "data/result.json"
 
 def generate_for_chatgpt(words)
   prompt = <<~PROMPT
-    Я учу польские глаголы.
+    Ты анализируешь одно польское существительное для приложения по изучению польской грамматики.
 
-    Я дам тебе список глаголов, а ты вернёшь JSON.
+    Твоя задача:
+    - вернуть только полезные для обучения данные
+    - не добавлять лишнюю лингвистическую теорию
+    - не выводить объяснения вне JSON
+    - не определять никакие группы склонения
+    - не добавлять комментарии внутри JSON
+    - использовать современный нормативный польский язык
+
+    Важно:
+    - род должен быть только одним из значений: "m", "f", "n"
+    - animate должно быть true или false
+    - animate ставь только по смыслу слова
+    - flags.has_alternation = true, если в формах есть заметное чередование основы, например kot → kocie, pies → psa, morze → morza, imię → imienia
+    - flags.has_irregular_plural = true, если множественное число образуется нестандартно или заметно выбивается
+    - flags.is_regular = true, если слово склоняется по обычной ожидаемой модели без сильных сюрпризов
+    - flags.is_difficult = true, если слово может быть неудобным или tricky для ученика из-за чередований, нестандартных форм или нетипичного поведения
+    - верни все формы в liczba pojedyncza и liczba mnoga
+    - если у слова нет естественного множественного числа или какая-то форма практически не употребляется, всё равно постарайся вернуть стандартную нормативную форму, если она существует
+    - если есть очень редкий или спорный случай, выбери самый нейтральный и общеупотребительный вариант
+
 
     Верни ТОЛЬКО JSON-массив объектов. Без текста, без markdown.
 
     Каждый объект должен иметь СТРОГО такую структуру:
 
     {
-      "polish_word": "",
-      "russian": "",
-
-      "present": {
-        "ja": "",
-        "ty": "",
-        "on": "",
-        "ona": "",
-        "ono": "",
-        "my": "",
-        "wy": "",
-        "oni": "",
-        "one": ""
+      "polish_word": "string",
+      "russian_word": "string",
+      "gender": "m|f|n",
+      "animate": true,
+      "flags": {
+        "is_regular": true,
+        "has_alternation": false,
+        "has_irregular_plural": false,
+        "is_difficult": false
       },
-
-      "past": {
-        "masculine": {
-          "ja": "",
-          "ty": "",
-          "on": "",
-          "my": "",
-          "wy": "",
-          "oni": ""
-        },
-        "feminine": {
-          "ja": "",
-          "ty": "",
-          "ona": "",
-          "my": "",
-          "wy": "",
-          "one": ""
-        },
-        "neuter": {
-          "ono": ""
-        }
+      "singular": {
+        "mianownik": "string",
+        "dopelniacz": "string",
+        "celownik": "string",
+        "biernik": "string",
+        "narzednik": "string",
+        "miejscownik": "string",
+        "wolacz": "string"
       },
-
-      "future": {
-        "masculine": {
-          "ja": "",
-          "ty": "",
-          "on": "",
-          "my": "",
-          "wy": "",
-          "oni": ""
-        },
-        "feminine": {
-          "ja": "",
-          "ty": "",
-          "ona": "",
-          "my": "",
-          "wy": "",
-          "one": ""
-        },
-        "neuter": {
-          "ono": ""
-        }
-      },
-
-      "conditional": {
-        "masculine": {
-          "ja": "",
-          "ty": "",
-          "on": "",
-          "my": "",
-          "wy": "",
-          "oni": ""
-        },
-        "feminine": {
-          "ja": "",
-          "ty": "",
-          "ona": "",
-          "my": "",
-          "wy": "",
-          "one": ""
-        },
-        "neuter": {
-          "ono": ""
-        }
-      },
-
-      "imperative": {
-        "ty": "",
-        "my": "",
-        "wy": ""
+      "plural": {
+        "mianownik": "string",
+        "dopelniacz": "string",
+        "celownik": "string",
+        "biernik": "string",
+        "narzednik": "string",
+        "miejscownik": "string",
+        "wolacz": "string"
       }
     }
 
-    Правила:
-    - Используй ТОЛЬКО глаголы из списка
-    - НЕ добавляй новые слова
-    - НЕ меняй глаголы
-    - Все формы должны быть реальными польскими формами
-    - Если глагол несовершенный — future делай через "będę + infinitive"
-    - Если совершенный — обычное будущее
-    - Никаких null, все поля должны быть заполнены строками
-
-    Вот список глаголов:
-    #{words.join(", ")}
+    Проанализируй слово: "#{words.join(", ")}"
     PROMPT
 
   response = HTTParty.post(
@@ -250,7 +477,7 @@ def generate_for_chatgpt(words)
   JSON.parse(content)
 end
 
-words = verbs
+words = nouns
 
 puts "Загружено слов: #{words.size}"
 
