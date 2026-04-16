@@ -84,6 +84,7 @@ function saveUiSettings(s) {
   localStorage.setItem("uiSettings", JSON.stringify(s));
 }
 function prevCase() {
+  localStorage.setItem("pathScroll", window.scrollY);
   const s = getUiSettings();
   const idx = CASES.indexOf(s.kase);
   s.kase = CASES[(idx - 1 + CASES.length) % CASES.length];
@@ -92,6 +93,7 @@ function prevCase() {
 }
 
 function nextCase() {
+  localStorage.setItem("pathScroll", window.scrollY);
   const s = getUiSettings();
   const idx = CASES.indexOf(s.kase);
   s.kase = CASES[(idx + 1) % CASES.length];
@@ -100,6 +102,7 @@ function nextCase() {
 }
 
 function toggleNumber() {
+  localStorage.setItem("pathScroll", window.scrollY);
   const s = getUiSettings();
   s.number = s.number === "singular" ? "plural" : "singular";
   saveUiSettings(s);
@@ -310,7 +313,11 @@ function renderPath() {
   });
   const savedScroll = localStorage.getItem("pathScroll");
   if (savedScroll !== null) {
-    window.scrollTo(0, parseInt(savedScroll, 10));
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, parseInt(savedScroll, 10));
+      });
+    });
   }
 }
 function getDisplayForm(noun) {
