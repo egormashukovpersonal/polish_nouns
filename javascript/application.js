@@ -49,6 +49,62 @@ function groupNouns(nouns) {
 
   return groups;
 }
+
+const CASES = [
+  "mianownik",
+  "dopelniacz",
+  "celownik",
+  "biernik",
+  "narzednik",
+  "miejscownik",
+  "wolacz"
+];
+const CASE_LABELS = {
+  mianownik: "Mn",
+  dopelniacz: "D",
+  celownik: "C",
+  biernik: "B",
+  narzednik: "N",
+  miejscownik: "Mc",
+  wolacz: "W"
+};
+
+const NUMBER_LABELS = {
+  singular: 'sin',
+  plural: 'plu'
+};
+function getUiSettings() {
+  return JSON.parse(localStorage.getItem("uiSettings") || JSON.stringify({
+    kase: "mianownik",
+    number: "singular"
+  }));
+}
+
+function saveUiSettings(s) {
+  localStorage.setItem("uiSettings", JSON.stringify(s));
+}
+function prevCase() {
+  const s = getUiSettings();
+  const idx = CASES.indexOf(s.kase);
+  s.kase = CASES[(idx - 1 + CASES.length) % CASES.length];
+  saveUiSettings(s);
+  router();
+}
+
+function nextCase() {
+  const s = getUiSettings();
+  const idx = CASES.indexOf(s.kase);
+  s.kase = CASES[(idx + 1) % CASES.length];
+  saveUiSettings(s);
+  router();
+}
+
+function toggleNumber() {
+  const s = getUiSettings();
+  s.number = s.number === "singular" ? "plural" : "singular";
+  saveUiSettings(s);
+  router();
+}
 function getNounGroup(n) {
   const word = n.polish_word;
 
@@ -172,10 +228,21 @@ function isLevelCompletedToday(level) {
 function renderPath() {
   const groups = groupNouns(HSK);
 
+  const s = getUiSettings();
+
   app.innerHTML = `
     <div class="fixed-bottom">
+      <button class="btn-case-selection prev" onclick="prevCase()">←</button>
+      <button class="btn-case-selection next" onclick="nextCase()">
+        ${CASE_LABELS[s.kase]} →
+      </button>
+      <button class="btn-case-selection singular" onclick="toggleNumber()">
+        ${NUMBER_LABELS[s.number]}
+      </button>
+
       <button id='srs-btn' onclick='startSrsSession()'>SRS</button>
     </div>
+
     <div class='path' id='path'></div>
   `;
 
@@ -210,7 +277,13 @@ function renderPath() {
         cell.className = "cell";
 
         const btn = document.createElement("button");
-        btn.textContent = v.polish_word;
+        const s = getUiSettings();
+
+        const form =
+          v[s.number]?.[s.kase] ||
+          v.polish_word;
+
+        btn.textContent = getDisplayForm(v);
 
         if (isLevelCompleted(v.id)) {
           btn.classList.add("completed");
@@ -240,7 +313,15 @@ function renderPath() {
     window.scrollTo(0, parseInt(savedScroll, 10));
   }
 }
+function getDisplayForm(noun) {
+  const s = getUiSettings();
 
+  return (
+    noun?.[s.number]?.[s.kase] ||
+    noun?.singular?.mianownik ||
+    noun.polish_word
+  );
+}
 function getCharsForLevel(level) {
   const startId = (level - 1) * WORDS_PER_LEVEL + 1;
   const endId = startId + WORDS_PER_LEVEL - 1;

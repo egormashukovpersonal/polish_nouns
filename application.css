@@ -5,7 +5,7 @@ body {
   font-family: system-ui, sans-serif;
   color: #fff;
 }
-html, body {
+html, body, .fixed-bottom {
   touch-action: manipulation;
   overscroll-behavior: none;
   -webkit-user-select: none;
@@ -80,7 +80,7 @@ html, body {
 .cell button {
   border-radius: 20px;
   height: auto;
-  min-height: 80px;
+  min-height: 70px;
   min-width: 150px;
   font-size: 40px;
 }
@@ -245,6 +245,16 @@ button.completed:hover {
   gap: 8px;
   margin-bottom: 10px;
 }
+.btn-case-selection.prev {
+  width: 15%;
+  margin-left: 20px;
+}
+.btn-case-selection.next {
+  width: 25%;
+}
+.btn-case-selection.singular {
+  width: 15%;
+}
 
 .dev-toggle {
   background: none;
@@ -281,7 +291,7 @@ h1 {
   width: 100%;
   background: #212121;
   z-index: 99;
-  bottom: 0;
+  bottom: -1px;
   left: 0px;
   padding-bottom: 120px;
   padding-top: 20px;
