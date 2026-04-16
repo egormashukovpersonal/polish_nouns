@@ -6014,37 +6014,6 @@
     "id": 194
   },
   {
-    "polish_word": "dzieje",
-    "russian_word": "история (летопись), события",
-    "gender": "m",
-    "animate": false,
-    "flags": {
-      "is_regular": false,
-      "has_alternation": false,
-      "has_irregular_plural": true,
-      "is_difficult": true
-    },
-    "singular": {
-      "mianownik": "-",
-      "dopelniacz": "-",
-      "celownik": "-",
-      "biernik": "-",
-      "narzednik": "-",
-      "miejscownik": "-",
-      "wolacz": "-"
-    },
-    "plural": {
-      "mianownik": "dzieje",
-      "dopelniacz": "dziejów",
-      "celownik": "dziejom",
-      "biernik": "dzieje",
-      "narzednik": "dziejami",
-      "miejscownik": "dziejach",
-      "wolacz": "dzieje"
-    },
-    "id": 195
-  },
-  {
     "polish_word": "okolica",
     "russian_word": "окрестность",
     "gender": "f",

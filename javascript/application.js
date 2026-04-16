@@ -14,16 +14,16 @@ const CASE_ANCHORS = {
 };
 
 const GROUPS = [
-  { name: "M basic", key: "m_basic" },
+  { name: "M", key: "m_basic" },
   { name: "M anim", key: "m_animate" },
-  { name: "M hard", key: "m_hard" },
+  // { name: "M hard", key: "m_hard" },
 
   { name: "F -a", key: "f_basic" },
   { name: "F cons", key: "f_cons" },
-  { name: "F hard", key: "f_hard" },
+  // { name: "F hard", key: "f_hard" },
 
   { name: "N -o", key: "n_basic" },
-  { name: "N hard", key: "n_hard" },
+  { name: "N", key: "n_hard" },
 
   { name: "Plural", key: "plural_only" },
   { name: "Mass", key: "singular_only" }
@@ -132,20 +132,20 @@ function getNounGroup(n) {
   if (n.gender === "m") {
     if (n.animate) return "m_animate";
 
-    if (n.flags?.is_difficult || n.flags?.has_alternation) {
-      return "m_hard";
-    }
+    // if (n.flags?.is_difficult || n.flags?.has_alternation) {
+    //   return "m_hard";
+    // }
 
     return "m_basic";
   }
 
   if (n.gender === "f") {
     if (word.endsWith("a")) {
-      if (n.flags?.is_difficult) return "f_hard";
+      // if (n.flags?.is_difficult) return "f_hard";
       return "f_basic";
     }
 
-    if (n.flags?.is_difficult) return "f_hard";
+    // if (n.flags?.is_difficult) return "f_hard";
 
     return "f_cons";
   }
@@ -155,7 +155,7 @@ function getNounGroup(n) {
     return "n_hard";
   }
 
-  return "m_hard";
+  return "m_basic";
 }
 
 let HSK = [];
